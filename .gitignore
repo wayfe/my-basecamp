@@ -1,5 +1,2 @@
 node_modules/
-public/bundle.js
-public/bundle.js.map
-public/sytle.css
-public/sytle.css.map
+public/dist/
