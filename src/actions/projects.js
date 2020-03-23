@@ -1,23 +1,29 @@
 import uuid from "uuid";
 import moment from "moment";
+import database from "../firebase/firebase";
 
+export const startAddProject = (projectData = {}) => {
+    return (dispatch, getState) => {
+        const uid = getState().auth.uid;
+        const {
+            title = "",
+            description = "",
+            id = "" ,
+            createdAt = "",
+        } = projectData;
+        const project = { createdAt, title, description, taskSets: [], docs: [], messages: [] }
+        return database.ref(`/users/${uid}/projects/${id}`).set(project).then(() => {
+            dispatch(addProject({
+                id,
+                ...project
+            }));
+        });
+    };                                                                                                                       
+};
 
-export const addProject = (
-    {
-        title = "",
-        description = "",  
-    } = {}
-) => ({
+export const addProject = (project) => ({
     type: "ADD_PROJECT",
-    project: {
-        id: uuid(),
-        createdAt: moment(),
-        title,
-        description,
-        taskSets: [],
-        docs: [],
-        messages: []
-    }
+    project
 });
 
 export const removeProject = ({ id } = {}) => ({
@@ -51,3 +57,32 @@ export const toggleTaskStatus = (projectId, taskSetId, task) => ({
     task
 });
 
+// SET_PROJECTS
+export const setProjects = (projects) => ({
+    type: "SET_PROJECTS",
+    projects
+});
+
+
+export const startSetProjects = () => {
+    return (dispatch, getState) => {
+        const uid = getState().auth.uid;
+        return database.ref(`/users/${uid}/projects/`).once("value").then((snapshots) => {
+            const projects = [];
+            snapshots.forEach((i) => {
+                const taskSetArray = [] 
+                const taskSets = i.val().taskSets;
+
+                for (var key in taskSets) {
+                    taskSetArray.push({...taskSets[key], id: key});
+                }
+                    
+                const project = {...i.val(), id: i.key, taskSets: taskSetArray}
+                    
+                projects.push(project);
+            });
+            console.log(projects);
+            dispatch(setProjects(projects));
+        });
+    };                                                                                                                       
+};
